@@ -6,12 +6,15 @@ import com.genesys.exception.ErrorMessage;
 import com.genesys.exception.MessageType;
 import com.mypurecloud.sdk.v2.ApiClient;
 import com.mypurecloud.sdk.v2.ApiException;
+import com.mypurecloud.sdk.v2.api.AnalyticsApi;
+import com.mypurecloud.sdk.v2.model.FlowObservationQueryFilter;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -43,6 +46,9 @@ public class GenesysAuthService {
 
             expiresAt = Instant.now().plusSeconds(expiresInSecond);
             log.info("Genesys token is refreshed, expire time: {}", expiresAt);
+
+
+
 
             return apiClient;
 
