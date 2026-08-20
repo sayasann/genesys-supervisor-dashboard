@@ -45,7 +45,7 @@ public class QueueObservationAggregator {
             int waitingCalls =sumMetric(resultsForQueue,METRIC_WAITING);
             int talkingAgents = sumMetric(resultsForQueue,METRIC_INTERACTING);
             QueueMetrics metrics = new QueueMetrics(queueId,null,waitingCalls,
-                    talkingAgents,0,0,0L,0L,0.0);
+                    talkingAgents,0,0L,0L,0.0);
             output.add(metrics);
         }
         return output;

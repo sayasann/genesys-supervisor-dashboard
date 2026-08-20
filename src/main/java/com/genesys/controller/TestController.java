@@ -3,6 +3,7 @@ package com.genesys.controller;
 import com.genesys.service.GenesysAuthService;
 import com.genesys.service.component.GenesysQueueDirectoryClient;
 import com.genesys.service.component.GenesysQueueMetricsClient;
+import com.genesys.service.component.QueueMetricsService;
 import com.genesys.service.component.QueueObservationAggregator;
 import com.mypurecloud.sdk.v2.ApiException;
 import com.mypurecloud.sdk.v2.model.Queue;
@@ -20,13 +21,16 @@ public class TestController {
     private final GenesysQueueMetricsClient client;
     private final GenesysQueueDirectoryClient user;
     private final QueueObservationAggregator aggregator;
+    private final QueueMetricsService queueMetricsService;
 
     public TestController(GenesysAuthService genesysAuthService,GenesysQueueMetricsClient client,
-                          GenesysQueueDirectoryClient user,QueueObservationAggregator aggregator){
+                          GenesysQueueDirectoryClient user,QueueObservationAggregator aggregator,
+                          QueueMetricsService queueMetricsService){
         this.genesysAuthService =  genesysAuthService;
         this.client=client;
         this.user=user;
         this.aggregator=aggregator;
+        this.queueMetricsService = queueMetricsService;
     }
 
 
@@ -34,9 +38,7 @@ public class TestController {
     public Object ping() throws ApiException, IOException{
 
         try {
-            List<Queue> queues = user.fetchQueues();
-            List<String> queueIds = queues.stream().map(Queue::getId).toList();
-            return aggregator.aggregate(client.fetchQueueObservations(queueIds));
+            return queueMetricsService.fetchQueueMetrics();
         } catch (ApiException e) {
             System.out.println("HTTP Status: " + e.getStatusCode());
             System.out.println("Response Body: " + e.getRawBody());
