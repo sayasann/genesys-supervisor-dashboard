@@ -65,7 +65,7 @@ public class GenesysQueueDirectoryClient {
 
 
         }
-
+        
 
         return queueList;
     }
