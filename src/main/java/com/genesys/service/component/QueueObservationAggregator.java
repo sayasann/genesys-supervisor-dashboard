@@ -1,6 +1,8 @@
 package com.genesys.service.component;
 
 import com.genesys.utils.QueueMetrics;
+import com.genesys.utils.QueueObservationStats;
+import com.mypurecloud.sdk.v2.model.ConversationAggregationQuery;
 import com.mypurecloud.sdk.v2.model.QueueObservationDataContainer;
 import com.mypurecloud.sdk.v2.model.QueueObservationQuery;
 import com.mypurecloud.sdk.v2.model.QueueObservationQueryResponse;
@@ -18,39 +20,32 @@ public class QueueObservationAggregator {
     private static final String METRIC_INTERACTING = "oInteracting";
 
 
-    public List<QueueMetrics> aggregate(QueueObservationQueryResponse response) {
+    public Map<String, QueueObservationStats> aggregate(QueueObservationQueryResponse response) {
 
-        List<QueueMetrics> output = new ArrayList<>();
 
+        Map<String, QueueObservationStats> result = new HashMap<>();
         if (response == null || response.getResults().isEmpty()) {
-            return List.of();
+            return result;
         }
 
         Map<String, List<QueueObservationDataContainer>> byQueueId = new HashMap<>();
 
         //her queueya ait interacting waiting tüm kanalları birleştiriyoruz(voice,chat, video etc.)
-        for (var result : response.getResults()) {
-            String queueId = result.getGroup().get("queueId");
+        for (var r : response.getResults()) {
+            String queueId = r.getGroup().get("queueId");
 
             if (!byQueueId.containsKey(queueId)) {
                 byQueueId.put(queueId, new ArrayList<>());
             }
-            byQueueId.get(queueId).add(result);
+            byQueueId.get(queueId).add(r);
         }
 
-        for (Map.Entry<String, List<QueueObservationDataContainer>> entry : byQueueId.entrySet()) {
-            String queueId = entry.getKey();
-            List<QueueObservationDataContainer> resultsForQueue = entry.getValue();
-
-            int waitingCalls =sumMetric(resultsForQueue,METRIC_WAITING);
-            int talkingAgents = sumMetric(resultsForQueue,METRIC_INTERACTING);
-            QueueMetrics metrics = new QueueMetrics(queueId,null,waitingCalls,
-                    talkingAgents,0,0L,0L,0.0);
-            output.add(metrics);
+        for(Map.Entry<String, List<QueueObservationDataContainer>> entry: byQueueId.entrySet()){
+            int waitingCalls = sumMetric(entry.getValue(),METRIC_WAITING);
+            int talkingAgents = sumMetric(entry.getValue(),METRIC_INTERACTING);
+            result.put(entry.getKey(),new QueueObservationStats(waitingCalls,talkingAgents));
         }
-        return output;
-
-
+        return result;
     }
 
     private int sumMetric(List<QueueObservationDataContainer> list, String metricName){

@@ -1,7 +1,12 @@
 package com.genesys.service.component;
 
+import com.genesys.utils.QueueAggregateStats;
 import com.genesys.utils.QueueMetrics;
+import com.genesys.utils.QueueObservationStats;
 import com.mypurecloud.sdk.v2.ApiException;
+import com.mypurecloud.sdk.v2.api.AnalyticsApi;
+import com.mypurecloud.sdk.v2.model.ConversationAggregateQueryResponse;
+import com.mypurecloud.sdk.v2.model.ConversationAggregationQuery;
 import com.mypurecloud.sdk.v2.model.Queue;
 import org.springframework.stereotype.Service;
 
@@ -16,20 +21,27 @@ public class QueueMetricsService {
 
     private final GenesysQueueDirectoryClient queueDirectoryClient;
     private final GenesysQueueMetricsClient queueMetricsClient;
-    private final QueueObservationAggregator aggregator;
+    private final GenesysQueueAggregatesClient queueAggregatesClient;
+    private final QueueObservationAggregator observationAggregator;
+    private final ConversationAggregateAggregator conversationAggregator;
 
     public QueueMetricsService(GenesysQueueDirectoryClient queueDirectoryClient,
                                GenesysQueueMetricsClient queueMetricsClient,
-                               QueueObservationAggregator aggregator) {
+                               QueueObservationAggregator aggregator,GenesysQueueAggregatesClient queueAggregatesClient,
+                               ConversationAggregateAggregator conversationAggregator) {
         this.queueDirectoryClient = queueDirectoryClient;
         this.queueMetricsClient = queueMetricsClient;
-        this.aggregator = aggregator;
+        this.observationAggregator = aggregator;
+        this.queueAggregatesClient = queueAggregatesClient;
+        this.conversationAggregator=conversationAggregator;
     }
 
 
     public List<QueueMetrics> fetchQueueMetrics() throws IOException, ApiException {
         // 1. Division'daki tüm queue'ları çek (id + name)
         List<Queue> queueList =queueDirectoryClient.fetchQueues();
+
+
 
         // 2. id -> name eşleşmesi için bir Map kur, kolayca aranabilsin diye
         Map<String,String> queueNamesById = new HashMap<>();
@@ -41,26 +53,34 @@ public class QueueMetricsService {
         List<String> queueIds = new ArrayList<>(queueNamesById.keySet());
         var observationResponse = queueMetricsClient.fetchQueueObservations(queueIds);
         // 4. Ham response'u queueId bazında topla (waitingCalls, talkingAgents)
-        List<QueueMetrics> aggregated = aggregator.aggregate(observationResponse);
+        Map<String, QueueObservationStats> aggregated = observationAggregator.aggregate(observationResponse);
 
-        // 5. Her QueueMetrics'e, Map'ten bulduğumuz queueName'i işleyerek yeni bir liste kur
-        List<QueueMetrics> enriched = new ArrayList<>();
-        for(QueueMetrics metrics:aggregated){
-            String queueName = queueNamesById.get(metrics.queueId());
+        // 3. ADIM: günlük toplamları çek (dailyTotalCalls, avgWaitSeconds, avgHandleSeconds, abandonRate)
+        ConversationAggregateQueryResponse aggregateResponse = queueAggregatesClient.fetchDailyAggregates(queueIds);
+        Map<String, QueueAggregateStats> aggregateStatsMap = conversationAggregator.aggregate(aggregateResponse);
 
-            QueueMetrics withName = new QueueMetrics(
-                    metrics.queueId(),
-                    queueName,
-                    metrics.waitingCalls(),
-                    metrics.talkingAgents(),
-                    metrics.dailyTotalCalls(),
-                    metrics.avgWaitSeconds(),
-                    metrics.avgHandleSeconds(),
-                    metrics.abandonRate()
+        List<QueueMetrics> result = new ArrayList<>();
+
+        for(String queueId: queueIds){
+            String queueName = queueNamesById.get(queueId);
+
+            QueueObservationStats observationStats = aggregated.get(queueId);
+            if(observationStats == null) {
+                observationStats = QueueObservationStats.empty();
+            }
+
+            QueueAggregateStats aggregateStats = aggregateStatsMap.get(queueId);
+            if(aggregateStats==null){
+                aggregateStats = ConversationAggregateAggregator.empty();
+            }
+            QueueMetrics metrics = new QueueMetrics(
+                    queueId,queueName,observationStats.waitingCalls(), observationStats.talkingAgents(),
+                    aggregateStats.totalCalls(), aggregateStats.avgWaitSeconds(),aggregateStats.avgHandleSeconds(),
+                    aggregateStats.abandonRate()
             );
-            enriched.add(withName);
+            result.add(metrics);
         }
 
-        return enriched;
+        return result;
     }
 }
