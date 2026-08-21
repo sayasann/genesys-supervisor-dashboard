@@ -1,12 +1,11 @@
-package com.genesys.service.component;
+package com.genesys.service;
 
+import com.genesys.service.component.*;
 import com.genesys.utils.QueueAggregateStats;
 import com.genesys.utils.QueueMetrics;
 import com.genesys.utils.QueueObservationStats;
 import com.mypurecloud.sdk.v2.ApiException;
-import com.mypurecloud.sdk.v2.api.AnalyticsApi;
 import com.mypurecloud.sdk.v2.model.ConversationAggregateQueryResponse;
-import com.mypurecloud.sdk.v2.model.ConversationAggregationQuery;
 import com.mypurecloud.sdk.v2.model.Queue;
 import org.springframework.stereotype.Service;
 

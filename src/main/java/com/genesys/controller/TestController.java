@@ -1,14 +1,16 @@
 package com.genesys.controller;
 
+import com.genesys.service.AgentQueueMembershipService;
+import com.genesys.service.AgentStatusService;
 import com.genesys.service.GenesysAuthService;
+import com.genesys.service.QueueMetricsService;
 import com.genesys.service.component.*;
 import com.mypurecloud.sdk.v2.ApiException;
-import com.mypurecloud.sdk.v2.model.Queue;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 public class TestController {
@@ -21,11 +23,20 @@ public class TestController {
     private final QueueMetricsService queueMetricsService;
     private final GenesysQueueAggregatesClient aggregator2;
     private final ConversationAggregateAggregator aggregator3;
+    private final AgentQueueMembershipService membershipService;
+    @Autowired
+    private GenesysAgentDirectoryClient agentDirectoryClient;
+    @Autowired
+    private AgentStatusAggregator agentStatusAggregator;
+
+    @Autowired
+    private AgentStatusService statusService;
 
     public TestController(GenesysAuthService genesysAuthService,GenesysQueueMetricsClient client,
                           GenesysQueueDirectoryClient user,QueueObservationAggregator aggregator,
                           QueueMetricsService queueMetricsService, GenesysQueueAggregatesClient aggregator2,
-                          ConversationAggregateAggregator conversationAggregateAggregator){
+                          ConversationAggregateAggregator conversationAggregateAggregator,
+                          AgentQueueMembershipService membershipService){
         this.genesysAuthService =  genesysAuthService;
         this.client=client;
         this.user=user;
@@ -33,6 +44,7 @@ public class TestController {
         this.queueMetricsService = queueMetricsService;
         this.aggregator2=aggregator2;
         this.aggregator3=conversationAggregateAggregator;
+        this.membershipService = membershipService;
     }
 
 
@@ -41,7 +53,8 @@ public class TestController {
 
         try {
 
-            return queueMetricsService.fetchQueueMetrics();
+
+            return  statusService.fetchAgentStatus();
         } catch (ApiException e) {
             System.out.println("HTTP Status: " + e.getStatusCode());
             System.out.println("Response Body: " + e.getRawBody());
