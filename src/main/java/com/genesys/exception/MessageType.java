@@ -9,7 +9,8 @@ public enum MessageType {
     NO_RECORD_EXIST("1", "Record is not exist.", HttpStatus.NOT_FOUND),
     GENESYS_AUTH_FAILED("2","Genesys token couldn't be fetched", HttpStatus.BAD_GATEWAY),
     GENESYS_UNAVAILABLE("3","Genesys is not reachable at the moment",HttpStatus.SERVICE_UNAVAILABLE),
-    INVALID_GENESYS_REGION("X", "Invalid AWS Region", HttpStatus.INTERNAL_SERVER_ERROR);
+    INVALID_GENESYS_REGION("4", "Invalid AWS Region", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_CREDENTIALS("5","Invalid login or password", HttpStatus.UNAUTHORIZED);
 
 
     private String code;

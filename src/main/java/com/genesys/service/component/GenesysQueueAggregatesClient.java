@@ -74,9 +74,11 @@ public class GenesysQueueAggregatesClient {
 
     private String todayInterval() {
         Instant now = Instant.now();
-        Instant sevenDaysAgo = now.minus(7, ChronoUnit.DAYS); // geçici, sadece test için
+        Instant startOfDay = now.truncatedTo(ChronoUnit.DAYS);
         DateTimeFormatter fmt = DateTimeFormatter.ISO_INSTANT;
-        return fmt.format(sevenDaysAgo) + "/" + fmt.format(now);
+        return fmt.format(startOfDay) + "/" + fmt.format(now);
+
+
     }
 
 }
