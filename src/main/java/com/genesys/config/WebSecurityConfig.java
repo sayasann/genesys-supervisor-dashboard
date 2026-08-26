@@ -1,0 +1,51 @@
+package com.genesys.config;
+
+import com.genesys.jwt.JwtAuthFilter;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+@EnableWebSecurity
+public class WebSecurityConfig {
+
+    private final AuthenticationProvider authenticationProvider;
+    private final JwtAuthFilter jwtAuthenticationFilter;
+
+    public WebSecurityConfig(AuthenticationProvider authenticationProvider,
+                             JwtAuthFilter jwtAuthenticationFilter) {
+        this.authenticationProvider = authenticationProvider;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
+
+    public SecurityFilterChain securityFilterChain(HttpSecurity http){
+        http
+                .csrf(csrf-> csrf.disable()) //zaten sameSite = strict kullanıyoruz gerek yok
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth-> auth
+                        .requestMatchers("/api/auth/login","actuator/health").permitAll()
+                        .requestMatchers("/","/*.html").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated()
+                    )
+                .authenticationProvider(authenticationProvider)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex-> ex
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                        .accessDeniedHandler((request, response, accessDeniedException) ->
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN)));
+
+        return http.build();
+
+    }
+
+
+
+}
