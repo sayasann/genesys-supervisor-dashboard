@@ -17,10 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
-   //Spring Boot, SecurityFilterChain'i kurduğumuz an,
-   // tanımladığımız AuthenticationProvider'lardan kendisi bir AuthenticationManager inşa ediyor
-   // ve onu bean olarak sunuyor — biz sadece constructor'da istiyoruz,
-   // nereden geldiğini bilmemize gerek yok
+
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
@@ -49,6 +46,7 @@ public class AuthService {
 
 
         } catch (BadCredentialsException e) {
+            System.out.println(rawPassword);
             throw new BaseException(new ErrorMessage(MessageType.INVALID_CREDENTIALS, ""));
         }
     }
