@@ -1,9 +1,7 @@
 package com.genesys.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.genesys.enums.user_enums.UserRole;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,18 +13,55 @@ import java.util.UUID;
 @Entity
 @Table(name = "users")
 @NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
+
+
 public class User {
 
     @Id
     @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
     private UUID id;
 
-    @Column()
+    @Column(unique = true,nullable = false)
     private String username;
-    @Column( )
+    @Column(nullable = false)
     private String password;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
+    @Column(nullable = false)
+    private boolean active=true;
+
+    public User(String username, String password, UserRole role){
+        this.username=username;
+        this.password=password;
+        this.role = role;
+    }
+
+
+    public String getUsername(){
+        return username;
+    }
+
+    public String getPassword(){
+        return password;
+    }
+
+    public UserRole getRole(){
+        return role;
+    }
+
+    public boolean isActive(){
+        return active;
+    }
+
+    public void deactivate(){
+        this.active=false;
+    }
+
+
+
+
+
+
 
 }

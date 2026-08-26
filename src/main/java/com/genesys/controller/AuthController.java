@@ -26,7 +26,7 @@ public class AuthController {
         String token = authService.login(request.getUsername(),request.getPassword());
         ResponseCookie cookie = ResponseCookie.from("token",token)
                 .httpOnly(true)
-                .secure(false)
+                .secure(false) // prodta true olacak https için
                 .sameSite("Strict")
                 .path("/")
                 .maxAge(Duration.ofMinutes(30))
