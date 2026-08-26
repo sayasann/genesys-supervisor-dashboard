@@ -23,8 +23,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletResponse response){
 
-        String token = authService.login(request.getUsername(),request.getPassword());
-        ResponseCookie cookie = ResponseCookie.from("token",token)
+        AuthService.LoginResult result = authService.login(request.getUsername(),request.getPassword());
+        ResponseCookie cookie = ResponseCookie.from("token",result.token())
                 .httpOnly(true)
                 .secure(false) // prodta true olacak https için
                 .sameSite("Strict")
@@ -32,6 +32,8 @@ public class AuthController {
                 .maxAge(Duration.ofMinutes(30))
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(new LoginResponse(result.role()));
     }
+
+    public record LoginResponse(String role){}
 }

@@ -7,32 +7,52 @@ import com.genesys.exception.MessageType;
 import com.genesys.hasher.PasswordHasher;
 import com.genesys.jwt.JwtService;
 import com.genesys.repo.UserRepository;
+import com.genesys.security.CustomUserDetails;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordHasher passwordHasher;
+   //Spring Boot, SecurityFilterChain'i kurduğumuz an,
+   // tanımladığımız AuthenticationProvider'lardan kendisi bir AuthenticationManager inşa ediyor
+   // ve onu bean olarak sunuyor — biz sadece constructor'da istiyoruz,
+   // nereden geldiğini bilmemize gerek yok
+    private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
     public AuthService(UserRepository userRepository,
-                       PasswordHasher passwordHasher,
+                       PasswordHasher passwordHasher, AuthenticationManager authenticationManager,
                        JwtService jwtService) {
-        this.userRepository = userRepository;
-        this.passwordHasher = passwordHasher;
+        this.authenticationManager = authenticationManager;
+
+
         this.jwtService = jwtService;
     }
 
-    public String login(String username, String rawPassword){
-        User user = userRepository.findByUsername(username).orElseThrow(()
-                -> new BaseException(new ErrorMessage(MessageType.INVALID_CREDENTIALS,"")));
 
-        if(!passwordHasher.matches(rawPassword,user.getPassword())){
-            throw new BaseException(new ErrorMessage(MessageType.INVALID_CREDENTIALS,""));
+
+    public LoginResult login(String username, String rawPassword){
+
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username,rawPassword)
+            );
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            User user = userDetails.getUser();
+
+            String token = jwtService.generateToken(user.getUsername());
+            return new LoginResult(token,user.getRole().name());
+
+
+        } catch (BadCredentialsException e) {
+            throw new BaseException(new ErrorMessage(MessageType.INVALID_CREDENTIALS, ""));
         }
-
-        return jwtService.generateToken(user.getUsername());
     }
+
+    public record LoginResult(String token, String role){}
 
 }
