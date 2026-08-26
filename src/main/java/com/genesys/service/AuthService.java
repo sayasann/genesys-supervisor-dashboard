@@ -24,8 +24,8 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository,
-                       PasswordHasher passwordHasher, AuthenticationManager authenticationManager,
+    public AuthService(
+                        AuthenticationManager authenticationManager,
                        JwtService jwtService) {
         this.authenticationManager = authenticationManager;
 
