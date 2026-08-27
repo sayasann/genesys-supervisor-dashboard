@@ -3,6 +3,7 @@ package com.genesys.controller;
 import com.genesys.dto.LoginRequest;
 import com.genesys.service.AuthService;
 import com.google.common.net.HttpHeaders;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseCookie;
@@ -33,6 +34,20 @@ public class AuthController {
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return ResponseEntity.ok(new LoginResponse(result.role()));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response){
+        ResponseCookie cookie = ResponseCookie.from("token","")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE,cookie.toString());
+        return  ResponseEntity.ok().build();
     }
 
     public record LoginResponse(String role){}

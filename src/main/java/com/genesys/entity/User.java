@@ -37,13 +37,18 @@ public class User {
         this.role = role;
     }
 
-
+    public boolean getActive(){return active;}
+    public UUID getId(){return id;}
     public String getUsername(){
         return username;
     }
 
     public String getPassword(){
         return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public UserRole getRole(){

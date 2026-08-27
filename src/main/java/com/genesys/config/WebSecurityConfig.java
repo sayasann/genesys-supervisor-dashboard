@@ -40,9 +40,8 @@ public class WebSecurityConfig {
                 .csrf(csrf-> csrf.disable()) //zaten sameSite = strict kullanıyoruz gerek yok
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth-> auth
-                        .requestMatchers("/api/auth/login","/actuator/health").permitAll()
+                        .requestMatchers("/api/auth/login","/actuator/health, /api/auth/logout").permitAll()
                         .requestMatchers("/","/*.html").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                     )
                 .authenticationProvider(authenticationProvider)

@@ -10,7 +10,8 @@ public enum MessageType {
     GENESYS_AUTH_FAILED("2","Genesys token couldn't be fetched", HttpStatus.BAD_GATEWAY),
     GENESYS_UNAVAILABLE("3","Genesys is not reachable at the moment",HttpStatus.SERVICE_UNAVAILABLE),
     INVALID_GENESYS_REGION("4", "Invalid AWS Region", HttpStatus.INTERNAL_SERVER_ERROR),
-    INVALID_CREDENTIALS("5","Invalid login or password", HttpStatus.UNAUTHORIZED);
+    INVALID_CREDENTIALS("5","Invalid login or password", HttpStatus.UNAUTHORIZED),
+    ALREADY_EXIST("5","This data already exists",HttpStatus.CONFLICT);
 
 
     private String code;

@@ -17,6 +17,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) {
+
+       //return CustomUserDetails(user) yapıyor aslında bulduktan sonra, o da implements UserDetails oldugu için
+        //problem yok
         return userRepository.findByUsername(username)
                 .map(CustomUserDetails::new)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));

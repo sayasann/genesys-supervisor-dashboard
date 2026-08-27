@@ -8,19 +8,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      /* Arka Plan ve Paneller */
       --bg: #03040B;
       --panel: rgba(17, 19, 31, 0.75);
       --panel-hover: rgba(26, 29, 46, 0.95);
       --border: rgba(255, 255, 255, 0.2);
       --border-soft: rgba(255, 255, 255, 0.1);
 
-      /* YENİ Metin Hiyerarşisi (Griler tamamen kaldırıldı, yerine parlak tonlar geldi) */
-      --text: #FFFFFF;          /* Saf beyaz (Ana değerler için) */
-      --text-dim: #F1F5F9;      /* Çok açık buz beyazı (İkincil metinler) */
-      --text-faint: #7DD3FC;    /* Parlak açık mavi (Etiketler ve başlıklar için, okunaklı neon) */
+      --text: #FFFFFF;
+      --text-dim: #F1F5F9;
+      --text-faint: #7DD3FC;
 
-      /* Durum Renkleri */
       --accent: #8B5CF6;
       --accent-dim: rgba(139, 92, 246, 0.2);
 
@@ -61,7 +58,7 @@
       justify-content:space-between;
       flex-wrap:wrap;
       gap:20px;
-      margin-bottom:40px;
+      margin-bottom:24px;
       padding: 20px 30px;
       background: var(--panel);
       backdrop-filter: blur(20px);
@@ -85,7 +82,7 @@
     }
     .brand .sub{ font-size:14px; color: var(--text-faint); margin-top:4px; font-weight:600;}
 
-    .status-cluster{ display:flex; align-items:center; gap:30px; }
+    .status-cluster{ display:flex; align-items:center; gap:22px; }
     .live-pill{
       display:flex; align-items:center; gap:10px;
       background: rgba(255,255,255,0.05);
@@ -112,6 +109,33 @@
     .clock{ font-family: var(--mono); text-align:right; }
     #clockTime { font-size: 16px; font-weight: 700; color: #FFFFFF; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
     .clock .updated{ font-size:12px; color: var(--accent); margin-top:4px; font-weight: 600; }
+
+    /* ---------- Sekme çubuğu (sadece ADMIN için görünür) ---------- */
+    .tab-bar{
+      display: none;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+    .tab-bar.show{ display: flex; }
+    .tab-btn{
+      font-family: var(--mono); font-size: 13px; font-weight: 600;
+      padding: 10px 20px; border-radius: 12px;
+      border: 1px solid var(--border-soft);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-faint);
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+    .tab-btn:hover{ color: #FFFFFF; border-color: var(--border); }
+    .tab-btn.active{
+      color: #FFFFFF;
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+    }
+
+    .view{ display: none; }
+    .view.active{ display: block; }
 
     .summary{
       display:grid;
@@ -308,6 +332,8 @@
     .status-tag.interacting{ color: var(--live); background: var(--live-dim); border: 1px solid rgba(16,185,129,0.3);}
     .status-tag.available{ color: var(--accent); background: var(--accent-dim); border: 1px solid rgba(139,92,246,0.3);}
     .status-tag.offqueue{ color: var(--text-dim); border: 1px solid var(--border-soft);}
+    .status-tag.active-user{ color: var(--live); background: var(--live-dim); border: 1px solid rgba(16,185,129,0.3);}
+    .status-tag.inactive-user{ color: var(--crit); background: var(--crit-dim); border: 1px solid rgba(251,113,133,0.3);}
 
     .queue-tags{ display:flex; flex-wrap:wrap; gap:8px; }
     .queue-tag{
@@ -331,12 +357,83 @@
       content: ''; height: 1px; width: 40px; background: var(--border-soft);
     }
 
+    /* ---------- Kullanıcılar sekmesi (admin) ---------- */
+    .add-user-card{
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .add-user-card h3{
+      font-size: 14px; font-weight: 700; color: #FFFFFF;
+      margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .add-user-form{
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+    }
+    .add-user-form .field{ display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 160px; }
+    .add-user-form label{
+      font-family: var(--mono); font-size: 10.5px; color: var(--text-faint);
+      text-transform: uppercase; letter-spacing: 0.3px; font-weight: 700;
+    }
+    .add-user-form input, .add-user-form select{
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #FFFFFF;
+      font-family: var(--body);
+      font-size: 14px;
+      outline: none;
+    }
+    .add-user-form input:focus, .add-user-form select:focus{
+      border-color: var(--accent);
+    }
+    .btn-primary{
+      background: linear-gradient(135deg, var(--accent), #3B82F6);
+      border: none; border-radius: 10px;
+      padding: 11px 22px;
+      color: #FFFFFF; font-weight: 700; font-size: 13.5px;
+      cursor: pointer;
+      box-shadow: 0 6px 16px -4px rgba(139, 92, 246, 0.5);
+      transition: transform .15s ease;
+    }
+    .btn-primary:hover{ transform: translateY(-1px); }
+    .btn-primary:disabled{ opacity: 0.5; cursor: default; transform: none; }
+
+    .btn-ghost{
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-soft);
+      border-radius: 8px;
+      padding: 7px 14px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .btn-ghost:hover{ color: #FFFFFF; border-color: var(--border); }
+    .btn-ghost.danger:hover{ color: var(--crit); border-color: rgba(251,113,133,0.4); background: var(--crit-dim); }
+
+    .row-actions{ display: flex; gap: 8px; }
+
+    .form-msg{
+      font-family: var(--mono); font-size: 12px; margin-top: 12px;
+      padding: 8px 12px; border-radius: 8px; display: none;
+    }
+    .form-msg.show{ display: block; }
+    .form-msg.ok{ background: var(--live-dim); color: var(--live); }
+    .form-msg.err{ background: var(--crit-dim); color: var(--crit); }
+
     @media (max-width: 768px){
       body{ padding:20px 16px 40px; }
       .topbar { padding: 16px; flex-direction: column; align-items: flex-start;}
       .status-cluster { width: 100%; justify-content: space-between; }
       .qc-primary{ gap:20px; }
       .summary-card .value { font-size: 26px; }
+      .add-user-form{ flex-direction: column; align-items: stretch; }
     }
 
     @media (prefers-reduced-motion: reduce){
@@ -344,7 +441,7 @@
       .queue-card{ transition: none; }
     }
 
-    /* ---------- Auth gate (giriş kontrolü / oturum düşme ekranı) ---------- */
+    /* ---------- Auth gate ---------- */
     .auth-gate{
       position: fixed;
       inset: 0;
@@ -409,38 +506,108 @@
       <div id="clockTime">--:--:--</div>
       <div class="updated" id="updatedAgo">güncelleniyor…</div>
     </div>
+    <button class="btn-ghost" id="logoutBtn">Çıkış</button>
   </div>
 </div>
 
-<div class="summary" id="summaryStrip"></div>
-
-<div class="section-head">
-  <h2>Kuyruklar</h2>
-  <span class="hint">15 sn'de bir otomatik yenilenir</span>
+<!-- Sadece ADMIN rolünde görünür, JS ile 'show' class'ı ekleniyor -->
+<div class="tab-bar" id="tabBar">
+  <button class="tab-btn active" id="tabDashboardBtn">Dashboard</button>
+  <button class="tab-btn" id="tabUsersBtn">Kullanıcılar</button>
 </div>
-<div class="queue-grid" id="queueGrid"></div>
 
-<div class="section-head">
-  <h2>Agent durumları</h2>
-  <span class="hint" id="agentCountHint"></span>
+<!-- ============ DASHBOARD GÖRÜNÜMÜ (supervisor + admin, mevcut davranış) ============ -->
+<div class="view active" id="dashboardView">
+
+  <div class="summary" id="summaryStrip"></div>
+
+  <div class="section-head">
+    <h2>Kuyruklar</h2>
+    <span class="hint">15 sn'de bir otomatik yenilenir</span>
+  </div>
+  <div class="queue-grid" id="queueGrid"></div>
+
+  <div class="section-head">
+    <h2>Agent durumları</h2>
+    <span class="hint" id="agentCountHint"></span>
+  </div>
+  <div class="agent-toolbar" id="agentFilters"></div>
+  <div class="agent-table-wrap">
+    <table class="agent-table">
+      <thead>
+      <tr>
+        <th>Agent</th>
+        <th>Durum</th>
+        <th>Kuyruklar</th>
+      </tr>
+      </thead>
+      <tbody id="agentTableBody"></tbody>
+    </table>
+  </div>
+
 </div>
-<div class="agent-toolbar" id="agentFilters"></div>
-<div class="agent-table-wrap">
-  <table class="agent-table">
-    <thead>
-    <tr>
-      <th>Agent</th>
-      <th>Durum</th>
-      <th>Kuyruklar</th>
-    </tr>
-    </thead>
-    <tbody id="agentTableBody"></tbody>
-  </table>
+
+<!-- ============ KULLANICILAR GÖRÜNÜMÜ (sadece ADMIN) ============ -->
+<div class="view" id="usersView">
+
+  <div class="add-user-card">
+    <h3>Yeni kullanıcı ekle</h3>
+    <form id="addUserForm" class="add-user-form" novalidate>
+      <div class="field">
+        <label for="newUsername">Kullanıcı adı</label>
+        <input id="newUsername" type="text" required autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="newPassword">Şifre</label>
+        <input id="newPassword" type="password" required autocomplete="new-password">
+      </div>
+      <div class="field" style="flex: 0 0 160px;">
+        <label for="newRole">Rol</label>
+        <select id="newRole">
+          <option value="SUPERVISOR">SUPERVISOR</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary" id="addUserBtn">Ekle</button>
+    </form>
+    <div class="form-msg" id="addUserMsg"></div>
+  </div>
+
+  <div class="section-head">
+    <h2>Kullanıcılar</h2>
+    <span class="hint" id="userCountHint"></span>
+  </div>
+  <div class="agent-table-wrap">
+    <table class="agent-table">
+      <thead>
+      <tr>
+        <th>Kullanıcı adı</th>
+        <th>Rol</th>
+        <th>Durum</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody id="usersTableBody"></tbody>
+    </table>
+  </div>
+
 </div>
 
 <footer id="footerLine">Genesys Cloud üzerinden canlı veri</footer>
 
 <script>
+  /* ============ API YOLLARI ============
+     Backend'inle path'ler farklıysa SADECE burayı güncellemen yeterli. */
+  const API = {
+    QUEUES: '/api/queues/metrics',
+    AGENTS: '/api/agents/status',
+    USERS_LIST: '/api/users/fetch',
+    USERS_CREATE: '/api/users/create',
+    USERS_RESET_PASSWORD: (id) => `/api/users/${id}/reset-password`,
+    USERS_DEACTIVATE: (id) => `/api/admin/users/${id}`,               // varsayım (DELETE ile çağrılıyor)
+    LOGOUT: '/api/auth/logout',
+  };
+
   /* ============ SABİTLER ============ */
   const STATUS_META = {
     INTERACTING: { label: "Konuşuyor", cls: "interacting" },
@@ -456,13 +623,15 @@
   let agentMeta = { stale: false, lastSuccessfulFetch: null };
   let activeFilter = "all";
   let redirecting = false;
+  let users = [];
+  const currentRole = sessionStorage.getItem('userRole') || '';
 
   /* ============ YARDIMCI ============ */
   function fmtSecToMin(s){
     const m = Math.floor(s/60), r = s%60;
     return `${m}:${String(r).padStart(2,'0')}`;
   }
-  function initials(name){ return name.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase(); }
+  function initials(name){ return (name || '?').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase(); }
 
   /* ============ AUTH GATE ============ */
   function showGate(title, sub){
@@ -481,10 +650,48 @@
     setTimeout(() => { window.location.href = 'index.html'; }, 650);
   }
 
-  /* ============ VERİ ÇEKME ============ */
+  /* ============ ÇIKIŞ (LOGOUT) ============ */
+  async function logout(){
+    try{
+      await fetch(API.LOGOUT, { method: 'POST', credentials: 'include' });
+    }catch(e){
+      // Backend'e ulaşılamasa bile kullanıcıyı local olarak çıkışa devam ettiriyoruz
+    }
+    sessionStorage.removeItem('userRole');
+    window.location.href = 'index.html';
+  }
+
+  /* ============ SEKME GEÇİŞİ (sadece ADMIN'de görünür) ============ */
+  function setupTabs(){
+    if(currentRole !== 'ADMIN') return; // supervisor için hiçbir şey değişmiyor, sekme hiç render edilmiyor
+
+    document.getElementById('tabBar').classList.add('show');
+
+    const dashboardBtn = document.getElementById('tabDashboardBtn');
+    const usersBtn = document.getElementById('tabUsersBtn');
+    const dashboardView = document.getElementById('dashboardView');
+    const usersView = document.getElementById('usersView');
+
+    dashboardBtn.addEventListener('click', () => {
+      dashboardBtn.classList.add('active');
+      usersBtn.classList.remove('active');
+      dashboardView.classList.add('active');
+      usersView.classList.remove('active');
+    });
+
+    usersBtn.addEventListener('click', () => {
+      usersBtn.classList.add('active');
+      dashboardBtn.classList.remove('active');
+      usersView.classList.add('active');
+      dashboardView.classList.remove('active');
+      fetchUsers();
+    });
+  }
+
+  /* ============ VERİ ÇEKME — DASHBOARD ============ */
   async function fetchQueueMetrics(){
     try{
-      const res = await fetch('/api/queues/metrics', { credentials: 'include' });
+      const res = await fetch(API.QUEUES, { credentials: 'include' });
       if(res.status === 401){ goToLogin(); return; }
       const body = await res.json();
       queues = body.queues || [];
@@ -496,7 +703,7 @@
 
   async function fetchAgentStatus(){
     try{
-      const res = await fetch('/api/agents/status', { credentials: 'include' });
+      const res = await fetch(API.AGENTS, { credentials: 'include' });
       if(res.status === 401){ goToLogin(); return; }
       const body = await res.json();
       agents = body.agents || [];
@@ -511,7 +718,63 @@
     }
   }
 
-  /* ============ RENDER ============ */
+  /* ============ VERİ ÇEKME — KULLANICILAR (admin) ============
+     Beklenen response şekli: [{ id, username, role, active }, ...]
+     Farklıysa renderUsers() içindeki alan adlarını güncelle. */
+  async function fetchUsers(){
+    try{
+      const res = await fetch(API.USERS_LIST, { credentials: 'include' });
+      if(res.status === 401){ goToLogin(); return; }
+      if(res.status === 403){
+        document.getElementById('usersTableBody').innerHTML =
+                `<tr><td colspan="4"><div class="empty-state">Bu bölüme erişim yetkin yok</div></td></tr>`;
+        return;
+      }
+      const body = await res.json();
+      users = Array.isArray(body) ? body : (body.users || []);
+      renderUsers();
+    }catch(e){
+      document.getElementById('usersTableBody').innerHTML =
+              `<tr><td colspan="4"><div class="empty-state">Kullanıcılar yüklenemedi</div></td></tr>`;
+    }
+  }
+
+  async function createUser(username, password, role){
+    const res = await fetch(API.USERS_CREATE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username, password, role })
+    });
+    if(res.status === 401){ goToLogin(); throw new Error('unauthorized'); }
+    if(res.status === 409){ throw new Error('Bu kullanıcı adı zaten kullanılıyor.'); }
+    if(!res.ok){
+      const text = await res.text().catch(() => '');
+      throw new Error(text || 'Kullanıcı eklenemedi');
+    }
+  }
+
+  async function resetPassword(userId, newPassword){
+    const res = await fetch(API.USERS_RESET_PASSWORD(userId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ newPassword: newPassword })
+    });
+    if(res.status === 401){ goToLogin(); throw new Error('unauthorized'); }
+    if(!res.ok) throw new Error('Şifre sıfırlanamadı');
+  }
+
+  async function deactivateUser(userId){
+    const res = await fetch(API.USERS_DEACTIVATE(userId), {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    if(res.status === 401){ goToLogin(); throw new Error('unauthorized'); }
+    if(!res.ok) throw new Error('Kullanıcı silinemedi');
+  }
+
+  /* ============ RENDER — DASHBOARD (değişmedi) ============ */
   function renderLiveStatus(){
     const dot = document.getElementById('liveDot');
     const label = document.getElementById('liveLabel');
@@ -653,6 +916,87 @@
     }).join('');
   }
 
+  /* ============ RENDER — KULLANICILAR (admin) ============ */
+  function renderUsers(){
+    document.getElementById('userCountHint').textContent = `${users.length} kullanıcı`;
+    const body = document.getElementById('usersTableBody');
+
+    if(users.length === 0){
+      body.innerHTML = `<tr><td colspan="4"><div class="empty-state">Henüz kullanıcı yok</div></td></tr>`;
+      return;
+    }
+
+    body.innerHTML = users.map(u => {
+      const isActive = u.active !== false;
+      return `
+    <tr data-id="${u.id}">
+      <td><div class="agent-name"><div class="avatar">${initials(u.username)}</div>${u.username}</div></td>
+      <td><span class="status-tag ${u.role === 'ADMIN' ? 'available' : 'offqueue'}"><span class="sdot"></span>${u.role}</span></td>
+      <td><span class="status-tag ${isActive ? 'active-user' : 'inactive-user'}"><span class="sdot"></span>${isActive ? 'Aktif' : 'Pasif'}</span></td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-ghost" data-action="reset" data-id="${u.id}">Şifre sıfırla</button>
+          ${isActive ? `<button class="btn-ghost danger" data-action="deactivate" data-id="${u.id}">Sil</button>` : ''}
+        </div>
+      </td>
+    </tr>`;
+    }).join('');
+
+    body.querySelectorAll('[data-action="reset"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const newPassword = prompt('Yeni şifreyi gir:');
+        if(!newPassword) return;
+        try{
+          await resetPassword(btn.dataset.id, newPassword);
+          alert('Şifre sıfırlandı.');
+        }catch(e){
+          alert('Şifre sıfırlanamadı: ' + e.message);
+        }
+      });
+    });
+
+    body.querySelectorAll('[data-action="deactivate"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if(!confirm('Bu kullanıcıyı silmek istediğine emin misin?')) return;
+        try{
+          await deactivateUser(btn.dataset.id);
+          await fetchUsers();
+        }catch(e){
+          alert('Silinemedi: ' + e.message);
+        }
+      });
+    });
+  }
+
+  function setupAddUserForm(){
+    const form = document.getElementById('addUserForm');
+    const msg = document.getElementById('addUserMsg');
+    const btn = document.getElementById('addUserBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('newUsername').value.trim();
+      const password = document.getElementById('newPassword').value;
+      const role = document.getElementById('newRole').value;
+
+      btn.disabled = true;
+      msg.classList.remove('show', 'ok', 'err');
+
+      try{
+        await createUser(username, password, role);
+        msg.textContent = 'Kullanıcı eklendi.';
+        msg.classList.add('show', 'ok');
+        form.reset();
+        await fetchUsers();
+      }catch(err){
+        msg.textContent = 'Eklenemedi: ' + err.message;
+        msg.classList.add('show', 'err');
+      }finally{
+        btn.disabled = false;
+      }
+    });
+  }
+
   function renderAll(){
     renderLiveStatus();
     renderSummary();
@@ -683,6 +1027,10 @@
     renderAll();
   }
 
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+
+  setupTabs();
+  setupAddUserForm();
   refreshAll();
   setInterval(refreshAll, 15000);
 </script>

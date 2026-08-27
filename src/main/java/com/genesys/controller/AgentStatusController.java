@@ -3,6 +3,7 @@ package com.genesys.controller;
 import com.genesys.cache.AgentStatusCache;
 import com.genesys.utils.CachedAgentStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +18,7 @@ public class AgentStatusController {
         this.cache=cache;
     }
 
+    @PreAuthorize("hasRole('SUPERVISOR') or hasRole('ADMIN')")
     @GetMapping("/agents/status")
     public ResponseEntity<CachedAgentStatus> getAgentStatus(){
         CachedAgentStatus cached = cache.get(); // at first there is a empty object CachedAgentStatus

@@ -5,8 +5,10 @@ import com.genesys.exception.MessageType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConversionException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,9 +19,6 @@ import java.util.*;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-
-
 
     //--If JSON can't be parsed
     @ExceptionHandler(value = HttpMessageConversionException.class)
@@ -69,6 +68,22 @@ public class GlobalExceptionHandler {
     private List<String> addToList(List<String> list, String message){
         list.add(message);
         return list;
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiError> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException exception, WebRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(createApiError(exception.getMessage(), request, HttpStatus.METHOD_NOT_ALLOWED));
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiError> handleAuthorizationDenied(
+            AuthorizationDeniedException exception, WebRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(createApiError("Bu işlem için yetkin yok.", request, HttpStatus.FORBIDDEN));
     }
 
 
