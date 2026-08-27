@@ -110,7 +110,6 @@
     #clockTime { font-size: 16px; font-weight: 700; color: #FFFFFF; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
     .clock .updated{ font-size:12px; color: var(--accent); margin-top:4px; font-weight: 600; }
 
-    /* ---------- Sekme çubuğu (sadece ADMIN için görünür) ---------- */
     .tab-bar{
       display: none;
       gap: 8px;
@@ -334,6 +333,10 @@
     .status-tag.offqueue{ color: var(--text-dim); border: 1px solid var(--border-soft);}
     .status-tag.active-user{ color: var(--live); background: var(--live-dim); border: 1px solid rgba(16,185,129,0.3);}
     .status-tag.inactive-user{ color: var(--crit); background: var(--crit-dim); border: 1px solid rgba(251,113,133,0.3);}
+    .status-tag.action-live{ color: var(--live); background: var(--live-dim); border: 1px solid rgba(16,185,129,0.3);}
+    .status-tag.action-crit{ color: var(--crit); background: var(--crit-dim); border: 1px solid rgba(251,113,133,0.3);}
+    .status-tag.action-accent{ color: var(--accent); background: var(--accent-dim); border: 1px solid rgba(139,92,246,0.3);}
+    .status-tag.action-warn{ color: var(--warn); background: var(--warn-dim); border: 1px solid rgba(251,191,36,0.3);}
 
     .queue-tags{ display:flex; flex-wrap:wrap; gap:8px; }
     .queue-tag{
@@ -348,6 +351,14 @@
       background: rgba(0,0,0,0.7);
     }
 
+    .pagination{
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+      margin-top: 18px;
+    }
+    .page-info{
+      font-family: var(--mono); font-size: 12px; color: var(--text-faint); font-weight: 600;
+    }
+
     footer{
       margin-top:60px; text-align:center; font-size:13px; color: var(--text-dim); font-weight: 600;
       font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px;
@@ -357,7 +368,6 @@
       content: ''; height: 1px; width: 40px; background: var(--border-soft);
     }
 
-    /* ---------- Kullanıcılar sekmesi (admin) ---------- */
     .add-user-card{
       background: var(--panel);
       backdrop-filter: blur(10px);
@@ -416,6 +426,8 @@
     }
     .btn-ghost:hover{ color: #FFFFFF; border-color: var(--border); }
     .btn-ghost.danger:hover{ color: var(--crit); border-color: rgba(251,113,133,0.4); background: var(--crit-dim); }
+    .btn-ghost:disabled{ opacity: 0.35; cursor: default; }
+    .btn-ghost:disabled:hover{ color: var(--text-dim); border-color: var(--border-soft); background: rgba(255,255,255,0.05); }
 
     .row-actions{ display: flex; gap: 8px; }
 
@@ -441,7 +453,6 @@
       .queue-card{ transition: none; }
     }
 
-    /* ---------- Auth gate ---------- */
     .auth-gate{
       position: fixed;
       inset: 0;
@@ -510,13 +521,12 @@
   </div>
 </div>
 
-<!-- Sadece ADMIN rolünde görünür, JS ile 'show' class'ı ekleniyor -->
 <div class="tab-bar" id="tabBar">
   <button class="tab-btn active" id="tabDashboardBtn">Dashboard</button>
   <button class="tab-btn" id="tabUsersBtn">Kullanıcılar</button>
+  <button class="tab-btn" id="tabAuditBtn">Audit Log</button>
 </div>
 
-<!-- ============ DASHBOARD GÖRÜNÜMÜ (supervisor + admin, mevcut davranış) ============ -->
 <div class="view active" id="dashboardView">
 
   <div class="summary" id="summaryStrip"></div>
@@ -547,7 +557,6 @@
 
 </div>
 
-<!-- ============ KULLANICILAR GÖRÜNÜMÜ (sadece ADMIN) ============ -->
 <div class="view" id="usersView">
 
   <div class="add-user-card">
@@ -593,29 +602,61 @@
 
 </div>
 
+<div class="view" id="auditView">
+
+  <div class="section-head">
+    <h2>Audit Log</h2>
+    <span class="hint" id="auditCountHint"></span>
+  </div>
+  <div class="agent-table-wrap">
+    <table class="agent-table">
+      <thead>
+      <tr>
+        <th>Eylem</th>
+        <th>Yapan</th>
+        <th>Hedef</th>
+        <th>Tarih</th>
+      </tr>
+      </thead>
+      <tbody id="auditTableBody"></tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    <button class="btn-ghost" id="auditPrevBtn">◀ Önceki</button>
+    <span class="page-info" id="auditPageInfo">Sayfa 1</span>
+    <button class="btn-ghost" id="auditNextBtn">Sonraki ▶</button>
+  </div>
+
+</div>
+
 <footer id="footerLine">Genesys Cloud üzerinden canlı veri</footer>
 
 <script>
-  /* ============ API YOLLARI ============
-     Backend'inle path'ler farklıysa SADECE burayı güncellemen yeterli. */
   const API = {
     QUEUES: '/api/queues/metrics',
     AGENTS: '/api/agents/status',
     USERS_LIST: '/api/users/fetch',
     USERS_CREATE: '/api/users/create',
     USERS_RESET_PASSWORD: (id) => `/api/users/${id}/reset-password`,
-    USERS_DEACTIVATE: (id) => `/api/admin/users/${id}`,               // varsayım (DELETE ile çağrılıyor)
+    USERS_DEACTIVATE: (id) => `/api/users/${id}/deactivate`,
     LOGOUT: '/api/auth/logout',
+    AUDIT_LOG: '/api/audit-log',
   };
 
-  /* ============ SABİTLER ============ */
   const STATUS_META = {
     INTERACTING: { label: "Konuşuyor", cls: "interacting" },
     AVAILABLE:   { label: "Müsait",    cls: "available" },
     OFF_QUEUE:   { label: "Off queue", cls: "offqueue" },
   };
 
-  /* ============ STATE ============ */
+  const AUDIT_ACTION_META = {
+    LOGIN_SUCCESS:      { label: "Giriş başarılı",   cls: "action-live" },
+    LOGIN_FAILED:       { label: "Giriş başarısız",  cls: "action-crit" },
+    USER_CREATED:       { label: "Kullanıcı eklendi", cls: "action-accent" },
+    USER_DEACTIVATED:   { label: "Kullanıcı silindi", cls: "action-crit" },
+    PASSWORD_RESET:     { label: "Şifre sıfırlandı",  cls: "action-warn" },
+  };
+
   let queues = [];
   let queueMeta = { stale: false, lastSuccessfulFetch: null };
   let agents = [];
@@ -624,16 +665,18 @@
   let activeFilter = "all";
   let redirecting = false;
   let users = [];
+  let auditLogs = [];
+  let auditPage = 0;
+  let auditTotalPages = 0;
+  const AUDIT_PAGE_SIZE = 20;
   const currentRole = sessionStorage.getItem('userRole') || '';
 
-  /* ============ YARDIMCI ============ */
   function fmtSecToMin(s){
     const m = Math.floor(s/60), r = s%60;
     return `${m}:${String(r).padStart(2,'0')}`;
   }
   function initials(name){ return (name || '?').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase(); }
 
-  /* ============ AUTH GATE ============ */
   function showGate(title, sub){
     document.getElementById('authGateTitle').textContent = title;
     document.getElementById('authGateSub').textContent = sub;
@@ -650,45 +693,47 @@
     setTimeout(() => { window.location.href = 'index.html'; }, 650);
   }
 
-  /* ============ ÇIKIŞ (LOGOUT) ============ */
   async function logout(){
     try{
       await fetch(API.LOGOUT, { method: 'POST', credentials: 'include' });
     }catch(e){
-      // Backend'e ulaşılamasa bile kullanıcıyı local olarak çıkışa devam ettiriyoruz
     }
     sessionStorage.removeItem('userRole');
     window.location.href = 'index.html';
   }
 
-  /* ============ SEKME GEÇİŞİ (sadece ADMIN'de görünür) ============ */
   function setupTabs(){
-    if(currentRole !== 'ADMIN') return; // supervisor için hiçbir şey değişmiyor, sekme hiç render edilmiyor
+    if(currentRole !== 'ADMIN') return;
 
     document.getElementById('tabBar').classList.add('show');
 
     const dashboardBtn = document.getElementById('tabDashboardBtn');
     const usersBtn = document.getElementById('tabUsersBtn');
+    const auditBtn = document.getElementById('tabAuditBtn');
     const dashboardView = document.getElementById('dashboardView');
     const usersView = document.getElementById('usersView');
+    const auditView = document.getElementById('auditView');
 
-    dashboardBtn.addEventListener('click', () => {
-      dashboardBtn.classList.add('active');
-      usersBtn.classList.remove('active');
-      dashboardView.classList.add('active');
-      usersView.classList.remove('active');
-    });
+    function activateTab(btn, view){
+      [dashboardBtn, usersBtn, auditBtn].forEach(b => b.classList.remove('active'));
+      [dashboardView, usersView, auditView].forEach(v => v.classList.remove('active'));
+      btn.classList.add('active');
+      view.classList.add('active');
+    }
+
+    dashboardBtn.addEventListener('click', () => activateTab(dashboardBtn, dashboardView));
 
     usersBtn.addEventListener('click', () => {
-      usersBtn.classList.add('active');
-      dashboardBtn.classList.remove('active');
-      usersView.classList.add('active');
-      dashboardView.classList.remove('active');
+      activateTab(usersBtn, usersView);
       fetchUsers();
+    });
+
+    auditBtn.addEventListener('click', () => {
+      activateTab(auditBtn, auditView);
+      fetchAuditLog(0);
     });
   }
 
-  /* ============ VERİ ÇEKME — DASHBOARD ============ */
   async function fetchQueueMetrics(){
     try{
       const res = await fetch(API.QUEUES, { credentials: 'include' });
@@ -718,9 +763,6 @@
     }
   }
 
-  /* ============ VERİ ÇEKME — KULLANICILAR (admin) ============
-     Beklenen response şekli: [{ id, username, role, active }, ...]
-     Farklıysa renderUsers() içindeki alan adlarını güncelle. */
   async function fetchUsers(){
     try{
       const res = await fetch(API.USERS_LIST, { credentials: 'include' });
@@ -774,7 +816,28 @@
     if(!res.ok) throw new Error('Kullanıcı silinemedi');
   }
 
-  /* ============ RENDER — DASHBOARD (değişmedi) ============ */
+  async function fetchAuditLog(page){
+    try{
+      const url = `${API.AUDIT_LOG}?page=${page}&size=${AUDIT_PAGE_SIZE}`;
+      const res = await fetch(url, { credentials: 'include' });
+      if(res.status === 401){ goToLogin(); return; }
+      if(res.status === 403){
+        document.getElementById('auditTableBody').innerHTML =
+                `<tr><td colspan="4"><div class="empty-state">Bu bölüme erişim yetkin yok</div></td></tr>`;
+        return;
+      }
+      const body = await res.json();
+      auditLogs = body.content || [];
+      auditPage = body.number || 0;
+      auditTotalPages = body.totalPages || 0;
+      document.getElementById('auditCountHint').textContent = `${body.totalElements || 0} kayıt`;
+      renderAuditLog();
+    }catch(e){
+      document.getElementById('auditTableBody').innerHTML =
+              `<tr><td colspan="4"><div class="empty-state">Kayıtlar yüklenemedi</div></td></tr>`;
+    }
+  }
+
   function renderLiveStatus(){
     const dot = document.getElementById('liveDot');
     const label = document.getElementById('liveLabel');
@@ -916,7 +979,6 @@
     }).join('');
   }
 
-  /* ============ RENDER — KULLANICILAR (admin) ============ */
   function renderUsers(){
     document.getElementById('userCountHint').textContent = `${users.length} kullanıcı`;
     const body = document.getElementById('usersTableBody');
@@ -968,6 +1030,41 @@
     });
   }
 
+  function renderAuditLog(){
+    const body = document.getElementById('auditTableBody');
+
+    if(auditLogs.length === 0){
+      body.innerHTML = `<tr><td colspan="4"><div class="empty-state">Henüz kayıt yok</div></td></tr>`;
+    } else {
+      body.innerHTML = auditLogs.map(log => {
+        const meta = AUDIT_ACTION_META[log.action] || { label: log.action, cls: "offqueue" };
+        const target = log.targetUsername ? log.targetUsername : '—';
+        const date = log.createdAt ? new Date(log.createdAt).toLocaleString('tr-TR') : '—';
+        return `
+      <tr>
+        <td><span class="status-tag ${meta.cls}"><span class="sdot"></span>${meta.label}</span></td>
+        <td><div class="agent-name"><div class="avatar">${initials(log.actorUsername)}</div>${log.actorUsername}</div></td>
+        <td>${target}</td>
+        <td style="font-family: var(--mono); font-size: 13px; color: var(--text-faint);">${date}</td>
+      </tr>`;
+      }).join('');
+    }
+
+    document.getElementById('auditPageInfo').textContent =
+            auditTotalPages > 0 ? `Sayfa ${auditPage + 1} / ${auditTotalPages}` : 'Sayfa 1';
+    document.getElementById('auditPrevBtn').disabled = auditPage <= 0;
+    document.getElementById('auditNextBtn').disabled = auditPage + 1 >= auditTotalPages;
+  }
+
+  function setupAuditPagination(){
+    document.getElementById('auditPrevBtn').addEventListener('click', () => {
+      if(auditPage > 0) fetchAuditLog(auditPage - 1);
+    });
+    document.getElementById('auditNextBtn').addEventListener('click', () => {
+      if(auditPage + 1 < auditTotalPages) fetchAuditLog(auditPage + 1);
+    });
+  }
+
   function setupAddUserForm(){
     const form = document.getElementById('addUserForm');
     const msg = document.getElementById('addUserMsg');
@@ -1005,7 +1102,6 @@
     renderAgentTable();
   }
 
-  /* ============ SAAT ============ */
   function tickClock(){
     const now = new Date();
     document.getElementById('clockTime').textContent = now.toLocaleTimeString('tr-TR');
@@ -1013,7 +1109,6 @@
   setInterval(() => { tickClock(); renderLiveStatus(); }, 1000);
   tickClock();
 
-  /* ============ POLLING (backend scheduler'ıyla aynı ritimde, 15sn) ============ */
   let authConfirmed = false;
 
   async function refreshAll(){
@@ -1031,6 +1126,7 @@
 
   setupTabs();
   setupAddUserForm();
+  setupAuditPagination();
   refreshAll();
   setInterval(refreshAll, 15000);
 </script>

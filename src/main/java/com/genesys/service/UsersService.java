@@ -4,6 +4,7 @@ import com.genesys.dto.ResetPasswordRequest;
 import com.genesys.dto.UserCreationRequest;
 import com.genesys.dto.UserDtoResponse;
 import com.genesys.entity.User;
+import com.genesys.enums.audit.AuditAction;
 import com.genesys.exception.BaseException;
 import com.genesys.exception.ErrorMessage;
 import com.genesys.exception.MessageType;
@@ -11,6 +12,7 @@ import com.genesys.repo.UserRepository;
 import com.genesys.security.CustomUserDetails;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,8 +31,11 @@ public class UsersService {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
-    public UsersService(UserRepository userRepository){
+    private AuditLogService auditLogService;
+
+    public UsersService(UserRepository userRepository,AuditLogService auditLogService){
         this.userRepository=userRepository;
+        this.auditLogService=auditLogService;
     }
 
     @Transactional
@@ -67,6 +72,10 @@ public class UsersService {
                 request.getRole());
 
         userRepository.save(user);
+
+        String actorName = SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        auditLogService.record(AuditAction.USER_CREATED, actorName, user.getUsername());
     }
 
     @Transactional
@@ -82,6 +91,8 @@ public class UsersService {
         User user = optional.get();
         user.setPassword(passwordEncoder.encode(newPassword));
 
+        String actorUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        auditLogService.record(AuditAction.PASSWORD_RESET, actorUsername, user.getUsername());
     }
 
     @Transactional
@@ -95,6 +106,9 @@ public class UsersService {
 
         User user = optional.get();
         user.deactivate();
+
+        String actorUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        auditLogService.record(AuditAction.USER_DEACTIVATED, actorUsername, user.getUsername());
     }
 
 

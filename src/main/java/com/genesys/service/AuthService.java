@@ -1,6 +1,7 @@
 package com.genesys.service;
 
 import com.genesys.entity.User;
+import com.genesys.enums.audit.AuditAction;
 import com.genesys.exception.BaseException;
 import com.genesys.exception.ErrorMessage;
 import com.genesys.exception.MessageType;
@@ -20,11 +21,13 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final AuditLogService auditLogService;
 
     public AuthService(
                         AuthenticationManager authenticationManager,
-                       JwtService jwtService) {
+                       JwtService jwtService, AuditLogService auditLogService) {
         this.authenticationManager = authenticationManager;
+        this.auditLogService=auditLogService;
 
 
         this.jwtService = jwtService;
@@ -41,12 +44,15 @@ public class AuthService {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             User user = userDetails.getUser();
 
+            auditLogService.record(AuditAction.LOGIN_SUCCESS,user.getUsername(),null);
+
             String token = jwtService.generateToken(user.getUsername());
             return new LoginResult(token,user.getRole().name());
 
 
         } catch (BadCredentialsException e) {
-            System.out.println(rawPassword);
+
+            auditLogService.record(AuditAction.LOGIN_FAILED, username, null);
             throw new BaseException(new ErrorMessage(MessageType.INVALID_CREDENTIALS, ""));
         }
     }
