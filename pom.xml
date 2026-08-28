@@ -40,6 +40,11 @@
 			<artifactId>platform-client-v2</artifactId>
 			<version>258.0.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 
 
 			<dependency>

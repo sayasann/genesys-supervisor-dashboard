@@ -11,6 +11,7 @@ import com.genesys.repo.UserRepository;
 import com.genesys.security.CustomUserDetails;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -49,8 +50,8 @@ public class AuthService {
             String token = jwtService.generateToken(user.getUsername());
             return new LoginResult(token,user.getRole().name());
 
-
-        } catch (BadCredentialsException e) {
+        //ŞİFRE YANLIŞSA VEYA DEACTIVE ADAM GIRMEYE CALISIYORSA
+        } catch (BadCredentialsException | DisabledException e) {
 
             auditLogService.record(AuditAction.LOGIN_FAILED, username, null);
             throw new BaseException(new ErrorMessage(MessageType.INVALID_CREDENTIALS, ""));
